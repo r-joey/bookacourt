@@ -228,7 +228,16 @@ export function BookingFlow({
       {step === 1 && (
         <>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-bold sm:text-xl">{longDate(date)}</h2>
+            {sports.length > 1 ? (
+              <div className="flex flex-wrap gap-2">
+                <FilterPill active={sportFilter === null} onClick={() => setSportFilter(null)}>All courts</FilterPill>
+                {sports.map((s) => (
+                  <FilterPill key={s} active={sportFilter === s} onClick={() => setSportFilter(s)}>{s}</FilterPill>
+                ))}
+              </div>
+            ) : (
+              <div />
+            )}
             <div className="flex items-center gap-2">
               <button className="btn-ghost btn-sm" onClick={() => setDate(addDaysKey(date, -1))} disabled={date === todayKey()} aria-label="Previous day">←</button>
               <div className="relative">
@@ -253,15 +262,6 @@ export function BookingFlow({
               <button className="btn-ghost btn-sm" onClick={() => setDate(addDaysKey(date, 1))} aria-label="Next day">→</button>
             </div>
           </div>
-
-          {sports.length > 1 && (
-            <div className="mb-4 flex flex-wrap gap-2">
-              <FilterPill active={sportFilter === null} onClick={() => setSportFilter(null)}>All courts</FilterPill>
-              {sports.map((s) => (
-                <FilterPill key={s} active={sportFilter === s} onClick={() => setSportFilter(s)}>{s}</FilterPill>
-              ))}
-            </div>
-          )}
 
           {visibleCourts.length === 0 ? (
             <div className="card p-10 text-center text-sm text-slate-400">No courts available.</div>

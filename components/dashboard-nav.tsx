@@ -6,9 +6,7 @@ import { usePathname } from "next/navigation";
 const OPERATIONS = [
   { href: "/dashboard", label: "Overview", icon: "home", exact: true },
   { href: "/dashboard/payments", label: "Payments", icon: "receipt" },
-  { href: "/dashboard/bookings", label: "Bookings", icon: "list" },
   { href: "/dashboard/schedule", label: "Schedule", icon: "grid" },
-  { href: "/dashboard/walk-in", label: "Walk-in booking", icon: "plus" },
 ];
 
 const SETUP = [
@@ -38,11 +36,12 @@ function Icon({ name }: { name: string }) {
   return <svg {...common}>{paths[name]}</svg>;
 }
 
-export function DashboardNav({ isOwner }: { isOwner: boolean }) {
+export function DashboardNav({ isOwner, pendingPayments = 0 }: { isOwner: boolean; pendingPayments?: number }) {
   const pathname = usePathname();
 
   const item = (i: { href: string; label: string; icon: string; exact?: boolean }) => {
     const active = i.exact ? pathname === i.href : pathname === i.href || pathname.startsWith(i.href + "/");
+    const badge = i.href === "/dashboard/payments" && pendingPayments > 0 ? pendingPayments : 0;
     return (
       <Link
         key={i.href}
@@ -52,7 +51,12 @@ export function DashboardNav({ isOwner }: { isOwner: boolean }) {
         }`}
       >
         <Icon name={i.icon} />
-        {i.label}
+        <span className="flex-1">{i.label}</span>
+        {badge > 0 && (
+          <span className="grid min-w-5 place-items-center rounded-full bg-[var(--color-brand)] px-1.5 text-xs font-semibold leading-5 text-white" aria-label={`${badge} pending`}>
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )}
       </Link>
     );
   };

@@ -635,6 +635,24 @@ export type Database = {
           status: Database["public"]["Enums"]["booking_status"]
         }[]
       }
+      get_day_bookings: {
+        Args: { p_date: string; p_venue_id: string }
+        Returns: {
+          court_id: string
+          hour: number
+          booking_id: string
+          booking_code: string
+          customer_name: string
+          customer_phone: string | null
+          customer_email: string | null
+          status: Database["public"]["Enums"]["booking_status"]
+          source: string
+          subtotal: number
+          slot_price: number
+          payment_proof_url: string | null
+          hold_expires_at: string | null
+        }[]
+      }
       is_platform_admin: { Args: Record<string, never>; Returns: boolean }
       is_venue_member: { Args: { p_venue_id: string }; Returns: boolean }
       submit_invoice_payment: {

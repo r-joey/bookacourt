@@ -134,8 +134,8 @@ export default async function OverviewPage() {
               </div>
             )}
           </div>
-          <Link href="/dashboard/walk-in" className="card block p-4 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            Add a walk-in booking
+          <Link href="/dashboard/schedule" className="card block p-4 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Open the schedule board
           </Link>
         </div>
       </div>

@@ -34,23 +34,33 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   // Is online booking possible? (needs an active QR payment method)
+  // Also count bookings awaiting payment review, for the Payments nav badge.
   let needsPaymentQr = false;
+  let pendingPayments = 0;
   if (active) {
     const supabase = await createClient();
-    const { count } = await supabase
-      .from("payment_methods")
-      .select("id", { count: "exact", head: true })
-      .eq("venue_id", active.id)
-      .eq("is_active", true)
-      .not("qr_url", "is", null);
-    needsPaymentQr = (count ?? 0) === 0;
+    const [{ count: qrCount }, { count: pendingCount }] = await Promise.all([
+      supabase
+        .from("payment_methods")
+        .select("id", { count: "exact", head: true })
+        .eq("venue_id", active.id)
+        .eq("is_active", true)
+        .not("qr_url", "is", null),
+      supabase
+        .from("bookings")
+        .select("id", { count: "exact", head: true })
+        .eq("venue_id", active.id)
+        .eq("status", "pending_payment"),
+    ]);
+    needsPaymentQr = (qrCount ?? 0) === 0;
+    pendingPayments = pendingCount ?? 0;
   }
 
   const sidebar = (
     <div className="flex h-full flex-col px-3 py-3">
       <VenueSwitcher venues={venues} activeId={active?.id} role={isOwner ? "owner" : "staff"} />
       <div className="mt-3 flex-1 overflow-y-auto">
-        <DashboardNav isOwner={isOwner} />
+        <DashboardNav isOwner={isOwner} pendingPayments={pendingPayments} />
       </div>
       <div className="flex items-center gap-2 border-t border-slate-100 px-2 py-3">
         <span className="grid h-8 w-8 place-items-center rounded-full bg-slate-800 text-xs font-semibold text-white">

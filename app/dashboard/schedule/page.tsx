@@ -1,6 +1,6 @@
 import { getActiveVenue } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { ScheduleView } from "./schedule-view";
+import { ScheduleManager } from "./schedule-manager";
 
 export default async function SchedulePage() {
   const venue = await getActiveVenue();
@@ -12,5 +12,5 @@ export default async function SchedulePage() {
     supabase.from("venue_hours").select("weekday, opens, closes, is_closed").eq("venue_id", venue.id),
   ]);
 
-  return <ScheduleView venueId={venue.id} courts={courts ?? []} hours={hours ?? []} />;
+  return <ScheduleManager venueId={venue.id} courts={courts ?? []} hours={hours ?? []} />;
 }

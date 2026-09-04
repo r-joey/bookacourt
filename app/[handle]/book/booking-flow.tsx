@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { SlotGrid, GridLegend, slotKey, type GridCourt } from "@/components/slot-grid";
 import {
-  longDate, todayKey, addDaysKey, weekdayOfKey, hoursList, currentHourManila, peso, hourRange,
+  longDate, shortDate, todayKey, addDaysKey, weekdayOfKey, hoursList, currentHourManila, peso, hourRange,
 } from "@/lib/format";
 
 type Hours = { weekday: number; opens: string; closes: string; is_closed: boolean };
@@ -32,6 +32,22 @@ export function BookingFlow({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [sportFilter, setSportFilter] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const dateRef = useRef<HTMLInputElement>(null);
+
+  // Persist the in-progress booking so an accidental reload during payment
+  // resumes at the Pay step instead of losing the held slots + upload form.
+  const SESSION_KEY = `bookacourt:booking:${venueId}`;
+  const clearSession = useCallback(() => {
+    try { localStorage.removeItem(SESSION_KEY); } catch {}
+  }, [SESSION_KEY]);
+  const patchSession = useCallback((patch: Record<string, unknown>) => {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      const cur = raw ? JSON.parse(raw) : {};
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ ...cur, ...patch }));
+    } catch {}
+  }, [SESSION_KEY]);
 
   const sports = [...new Set(courts.map((c) => c.sport).filter(Boolean))] as string[];
   const visibleCourts = sportFilter ? courts.filter((c) => c.sport === sportFilter) : courts;
@@ -43,12 +59,55 @@ export function BookingFlow({
     setStatusByKey(map);
   }, [supabase, venueId, date]);
 
+  // On mount: restore a still-valid held booking, else start fresh.
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (s.bookingId && s.holdExpiresAt && new Date(s.holdExpiresAt).getTime() > Date.now()) {
+          setBooking({ id: s.bookingId, code: s.code, subtotal: s.subtotal, holdExpiresAt: s.holdExpiresAt });
+          setDate(s.date || todayKey());
+          setCustomer(s.customer || { name: "", email: "", phone: "" });
+          setMethodId(s.methodId || methods[0]?.id || "");
+          setProofUrl(s.proofUrl || "");
+          if (Array.isArray(s.slots)) {
+            setSelected(new Map(s.slots.map((sl: Picked) => [slotKey(sl.court_id, sl.hour), sl])));
+          }
+          setStep(3);
+        } else {
+          clearSession();
+        }
+      }
+    } catch {
+      clearSession();
+    }
+    setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
     if (step === 1) {
       setSelected(new Map());
       loadAvailability();
     }
-  }, [step, loadAvailability]);
+  }, [hydrated, step, loadAvailability]);
+
+  function openDatePicker() {
+    const el = dateRef.current;
+    if (!el) return;
+    if (typeof el.showPicker === "function") {
+      try { el.showPicker(); return; } catch {}
+    }
+    el.focus();
+    el.click();
+  }
+
+  function chooseMethod(id: string) {
+    setMethodId(id);
+    patchSession({ methodId: id });
+  }
 
   const wd = weekdayOfKey(date);
   const dayHours = hours.find((h) => h.weekday === wd);
@@ -85,6 +144,17 @@ export function BookingFlow({
     if (rpcErr) { setError(rpcErr.message); return; }
     const res = data as { booking_id: string; booking_code: string; subtotal: number; hold_expires_at: string };
     setBooking({ id: res.booking_id, code: res.booking_code, subtotal: res.subtotal, holdExpiresAt: res.hold_expires_at });
+    patchSession({
+      bookingId: res.booking_id,
+      code: res.booking_code,
+      subtotal: res.subtotal,
+      holdExpiresAt: res.hold_expires_at,
+      date,
+      customer,
+      methodId,
+      proofUrl: "",
+      slots: [...selected.values()],
+    });
     setStep(3);
   }
 
@@ -100,6 +170,7 @@ export function BookingFlow({
       if (upErr) throw upErr;
       const { data } = supabase.storage.from("payment-proofs").getPublicUrl(path);
       setProofUrl(data.publicUrl);
+      patchSession({ proofUrl: data.publicUrl });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -118,17 +189,23 @@ export function BookingFlow({
     });
     setBusy(false);
     if (rpcErr) { setError(rpcErr.message); return; }
+    clearSession();
     setStep(4);
   }
 
   async function cancelBooking() {
     if (booking) await supabase.rpc("cancel_online_booking", { p_booking_id: booking.id });
+    clearSession();
     setBooking(null);
     setProofUrl("");
     setStep(1);
   }
 
   const chosenMethod = methods.find((m) => m.id === methodId);
+
+  if (!hydrated) {
+    return <div className="card p-10 text-center text-sm text-slate-400">Loading…</div>;
+  }
 
   return (
     <div>
@@ -154,13 +231,25 @@ export function BookingFlow({
             <h2 className="text-lg font-bold sm:text-xl">{longDate(date)}</h2>
             <div className="flex items-center gap-2">
               <button className="btn-ghost btn-sm" onClick={() => setDate(addDaysKey(date, -1))} disabled={date === todayKey()} aria-label="Previous day">←</button>
-              <input
-                type="date"
-                className="input !w-auto !py-1.5 text-sm"
-                value={date}
-                min={todayKey()}
-                onChange={(e) => e.target.value && setDate(e.target.value)}
-              />
+              <div className="relative">
+                <input
+                  ref={dateRef}
+                  type="date"
+                  className="sr-only"
+                  tabIndex={-1}
+                  aria-hidden
+                  value={date}
+                  min={todayKey()}
+                  onChange={(e) => e.target.value && setDate(e.target.value)}
+                />
+                <button type="button" className="btn-ghost btn-sm gap-1.5" onClick={openDatePicker} aria-label="Pick a date">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <path d="M16 2v4M8 2v4M3 10h18" />
+                  </svg>
+                  {shortDate(date)}
+                </button>
+              </div>
               <button className="btn-ghost btn-sm" onClick={() => setDate(addDaysKey(date, 1))} aria-label="Next day">→</button>
             </div>
           </div>
@@ -232,13 +321,13 @@ export function BookingFlow({
       {step === 3 && booking && (
         <div className="grid gap-6 md:grid-cols-[1fr_280px]">
           <div>
-            <HoldTimer expiresAt={booking.holdExpiresAt} onExpire={() => { setError("Your hold expired. Please start again."); }} />
+            <HoldTimer expiresAt={booking.holdExpiresAt} onExpire={() => { clearSession(); setBooking(null); setProofUrl(""); setStep(1); setError("Your hold expired. Please pick your slots again."); }} />
             <h2 className="mt-4 text-xl font-bold">Pay {peso(booking.subtotal)}</h2>
 
             <p className="mt-4 text-sm font-semibold text-slate-500">1 — Choose how to pay</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {methods.map((m) => (
-                <button key={m.id} onClick={() => setMethodId(m.id)} className={`rounded-lg border px-3 py-1.5 text-sm ${methodId === m.id ? "border-[var(--color-brand)] bg-blue-50 font-semibold text-[var(--color-brand)]" : "border-slate-200"}`}>
+                <button key={m.id} onClick={() => chooseMethod(m.id)} className={`rounded-lg border px-3 py-1.5 text-sm ${methodId === m.id ? "border-[var(--color-brand)] bg-blue-50 font-semibold text-[var(--color-brand)]" : "border-slate-200"}`}>
                   {m.label}
                 </button>
               ))}

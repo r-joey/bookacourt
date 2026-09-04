@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { VenueBookingHeader } from "@/components/venue-booking-header";
 import { FindBooking } from "./find-booking";
 
 function slugFromHandle(handle: string) {
@@ -20,7 +20,7 @@ export default async function FindPage({
   const supabase = await createClient();
   const { data: venue } = await supabase
     .from("venues")
-    .select("name, slug")
+    .select("name, slug, logo_url, sport")
     .eq("slug", slug)
     .eq("is_published", true)
     .maybeSingle();
@@ -28,11 +28,8 @@ export default async function FindPage({
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-md px-5 py-10">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">{venue.name}</h1>
-          <Link href={`/@${venue.slug}`} className="text-sm font-medium text-[var(--color-brand)]">Venue page</Link>
-        </div>
+      <div className="mx-auto max-w-md px-4 py-8 sm:px-5 sm:py-10">
+        <VenueBookingHeader slug={venue.slug} name={venue.name} logoUrl={venue.logo_url} sport={venue.sport} />
         <FindBooking />
       </div>
     </div>

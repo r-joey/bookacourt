@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { SPORT_EMOJI } from "@/lib/constants";
+import { VenueBookingHeader } from "@/components/venue-booking-header";
 import { BookingFlow } from "./booking-flow";
 
 function slugFromHandle(handle: string) {
@@ -36,22 +35,7 @@ export default async function BookPage({
   return (
     <div className="min-h-screen">
       <div className="mx-auto max-w-3xl px-4 py-6 sm:px-5 sm:py-8">
-        <div className="mb-6">
-          <Link href={`/@${venue.slug}`} className="group inline-flex items-center gap-3">
-            <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-blue-50 text-xl">
-              {venue.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={venue.logo_url} alt={venue.name} className="h-full w-full object-cover" />
-              ) : (
-                SPORT_EMOJI[venue.sport] ?? "🏟️"
-              )}
-            </span>
-            <span>
-              <span className="block text-xl font-bold tracking-tight group-hover:underline">{venue.name}</span>
-              <span className="block text-sm text-slate-500">Book a court</span>
-            </span>
-          </Link>
-        </div>
+        <VenueBookingHeader slug={venue.slug} name={venue.name} logoUrl={venue.logo_url} sport={venue.sport} />
 
         <BookingFlow
           venueId={venue.id}

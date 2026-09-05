@@ -41,6 +41,7 @@ export function ScheduleManager({
   const [view, setView] = useState<"board" | "list">("board");
   const [date, setDate] = useState(todayKey());
   const [rows, setRows] = useState<DayRow[]>([]);
+  const [priceByKey, setPriceByKey] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -55,8 +56,14 @@ export function ScheduleManager({
 
   const loadBoard = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.rpc("get_day_bookings", { p_venue_id: venueId, p_date: date });
+    const [{ data }, { data: prices }] = await Promise.all([
+      supabase.rpc("get_day_bookings", { p_venue_id: venueId, p_date: date }),
+      supabase.rpc("get_day_prices", { p_venue_id: venueId, p_date: date }),
+    ]);
     setRows((data as DayRow[]) ?? []);
+    const pmap: Record<string, number> = {};
+    for (const row of prices ?? []) pmap[slotKey(row.court_id, row.hour)] = row.price;
+    setPriceByKey(pmap);
     setLoading(false);
   }, [supabase, venueId, date]);
 
@@ -117,7 +124,7 @@ export function ScheduleManager({
   function openEmpty(courtId: string, hour: number) {
     setError("");
     setDrawerBooking(null);
-    setDrawerWalkin({ court_id: courtId, court_name: courtName(courtId), hour, price: courtPrice(courtId), date });
+    setDrawerWalkin({ court_id: courtId, court_name: courtName(courtId), hour, price: priceByKey[slotKey(courtId, hour)] ?? courtPrice(courtId), date });
   }
 
   function afterMutation() {

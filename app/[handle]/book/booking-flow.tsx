@@ -25,6 +25,7 @@ export function BookingFlow({
   const [step, setStep] = useState(1);
   const [date, setDate] = useState(todayKey());
   const [statusByKey, setStatusByKey] = useState<Record<string, Status>>({});
+  const [priceByKey, setPriceByKey] = useState<Record<string, number>>({});
   const [selected, setSelected] = useState<Map<string, Picked>>(new Map());
   const [customer, setCustomer] = useState({ name: "", email: "", phone: "" });
   const [booking, setBooking] = useState<{ id: string; code: string; subtotal: number; holdExpiresAt: string } | null>(null);
@@ -54,10 +55,16 @@ export function BookingFlow({
   const visibleCourts = sportFilter ? courts.filter((c) => c.sport === sportFilter) : courts;
 
   const loadAvailability = useCallback(async () => {
-    const { data } = await supabase.rpc("get_availability", { p_venue_id: venueId, p_date: date });
+    const [{ data: avail }, { data: prices }] = await Promise.all([
+      supabase.rpc("get_availability", { p_venue_id: venueId, p_date: date }),
+      supabase.rpc("get_day_prices", { p_venue_id: venueId, p_date: date }),
+    ]);
     const map: Record<string, Status> = {};
-    for (const row of data ?? []) map[slotKey(row.court_id, row.hour)] = row.status as Status;
+    for (const row of avail ?? []) map[slotKey(row.court_id, row.hour)] = row.status as Status;
     setStatusByKey(map);
+    const pmap: Record<string, number> = {};
+    for (const row of prices ?? []) pmap[slotKey(row.court_id, row.hour)] = row.price;
+    setPriceByKey(pmap);
   }, [supabase, venueId, date]);
 
   // On mount: restore a still-valid held booking, else start fresh.
@@ -122,7 +129,7 @@ export function BookingFlow({
     setSelected((prev) => {
       const next = new Map(prev);
       if (next.has(key)) next.delete(key);
-      else next.set(key, { court_id: court.id, court_name: court.name, hour, price: court.hourly_price });
+      else next.set(key, { court_id: court.id, court_name: court.name, hour, price: priceByKey[slotKey(court.id, hour)] ?? court.hourly_price });
       return next;
     });
   }
@@ -270,7 +277,7 @@ export function BookingFlow({
             <div className="card p-10 text-center text-sm text-slate-400">Closed on this day.</div>
           ) : (
             <div className="card space-y-4 p-4">
-              <SlotGrid courts={visibleCourts} hours={hourRows} statusByKey={statusByKey} selected={new Set(selected.keys())} onToggle={toggle} isPast={(h) => (isToday ? h <= nowHour : false)} />
+              <SlotGrid courts={visibleCourts} hours={hourRows} statusByKey={statusByKey} selected={new Set(selected.keys())} onToggle={toggle} isPast={(h) => (isToday ? h <= nowHour : false)} priceByKey={priceByKey} />
               <GridLegend />
             </div>
           )}

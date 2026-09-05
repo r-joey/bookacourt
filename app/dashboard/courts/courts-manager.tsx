@@ -5,20 +5,29 @@ import { createCourt, updateCourt, deleteCourt, type ActionState } from "@/app/d
 import { SubmitButton } from "@/components/submit-button";
 import { SPORTS } from "@/lib/constants";
 import { peso } from "@/lib/format";
-import type { Court } from "@/lib/supabase/database.types";
+import type { Court, CourtPricingRule } from "@/lib/supabase/database.types";
+import { CourtPricing } from "./court-pricing";
 
 export function CourtsManager({
   venueId,
   defaultSport,
   courts,
   pricePerCourt,
+  rules,
 }: {
   venueId: string;
   defaultSport: string;
   courts: Court[];
   pricePerCourt: number;
+  rules: CourtPricingRule[];
 }) {
   const [state, action] = useActionState<ActionState, FormData>(createCourt, undefined);
+  const rulesByCourt = new Map<string, CourtPricingRule[]>();
+  for (const r of rules) {
+    const arr = rulesByCourt.get(r.court_id) ?? [];
+    arr.push(r);
+    rulesByCourt.set(r.court_id, arr);
+  }
   const [showAdd, setShowAdd] = useState(courts.length === 0);
   const [acknowledged, setAcknowledged] = useState(false);
 
@@ -90,7 +99,7 @@ export function CourtsManager({
           <p className="text-sm text-slate-400">No courts yet.</p>
         )}
         {courts.map((court) => (
-          <CourtRow key={court.id} court={court} />
+          <CourtRow key={court.id} court={court} venueId={venueId} rules={rulesByCourt.get(court.id) ?? []} />
         ))}
       </div>
     </div>
@@ -106,34 +115,37 @@ function SubmitButtonGuarded({ disabled }: { disabled: boolean }) {
   );
 }
 
-function CourtRow({ court }: { court: Court }) {
+function CourtRow({ court, venueId, rules }: { court: Court; venueId: string; rules: CourtPricingRule[] }) {
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
 
   if (!editing) {
     return (
-      <div className="card flex items-center justify-between p-4">
-        <div className="flex items-center gap-3">
-          <span className={`h-2.5 w-2.5 rounded-full ${court.is_active ? "bg-emerald-500" : "bg-slate-300"}`} />
-          <div>
-            <p className="font-medium">{court.name}</p>
-            <p className="text-xs text-slate-400">{court.sport} · {peso(court.hourly_price)}/hr {court.is_active ? "" : "· inactive"}</p>
+      <div className="card p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className={`h-2.5 w-2.5 rounded-full ${court.is_active ? "bg-emerald-500" : "bg-slate-300"}`} />
+            <div>
+              <p className="font-medium">{court.name}</p>
+              <p className="text-xs text-slate-400">{court.sport} · {peso(court.hourly_price)}/hr {court.is_active ? "" : "· inactive"}</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button className="btn-ghost btn-sm" onClick={() => setEditing(true)}>Edit</button>
+            <button
+              className="btn-ghost btn-sm text-red-600"
+              disabled={pending}
+              onClick={() => {
+                if (confirm(`Remove ${court.name}? It stops adding to your monthly bill from your next cycle.`)) {
+                  startTransition(() => deleteCourt(court.id));
+                }
+              }}
+            >
+              Delete
+            </button>
           </div>
         </div>
-        <div className="flex gap-2">
-          <button className="btn-ghost btn-sm" onClick={() => setEditing(true)}>Edit</button>
-          <button
-            className="btn-ghost btn-sm text-red-600"
-            disabled={pending}
-            onClick={() => {
-              if (confirm(`Remove ${court.name}? It stops adding to your monthly bill from your next cycle.`)) {
-                startTransition(() => deleteCourt(court.id));
-              }
-            }}
-          >
-            Delete
-          </button>
-        </div>
+        <CourtPricing venueId={venueId} courtId={court.id} basePrice={court.hourly_price} rules={rules} />
       </div>
     );
   }

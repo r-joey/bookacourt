@@ -173,6 +173,40 @@ export async function deleteCourt(id: string) {
   revalidatePath("/dashboard/courts");
 }
 
+// ---------------- court pricing rules (peak / off-peak) ----------------
+export async function createPricingRule(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const courtId = String(formData.get("court_id"));
+  const venueId = String(formData.get("venue_id"));
+  const days = formData.getAll("days").map((d) => Number(d)).filter((d) => d >= 0 && d <= 6);
+  const start = Number(formData.get("start_hour"));
+  const end = Number(formData.get("end_hour"));
+  const price = Math.round(Number(formData.get("price") ?? 0));
+  if (!days.length) return { error: "Pick at least one day." };
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+    return { error: "End time must be after the start time." };
+  }
+  if (!Number.isFinite(price) || price < 0) return { error: "Enter a valid price." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("court_pricing_rules").insert({
+    court_id: courtId,
+    venue_id: venueId,
+    days,
+    start_hour: start,
+    end_hour: end,
+    price,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard/courts");
+  return { ok: true };
+}
+
+export async function deletePricingRule(id: string) {
+  const supabase = await createClient();
+  await supabase.from("court_pricing_rules").delete().eq("id", id);
+  revalidatePath("/dashboard/courts");
+}
+
 // ---------------- hours ----------------
 export async function saveHours(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const venueId = String(formData.get("venue_id"));

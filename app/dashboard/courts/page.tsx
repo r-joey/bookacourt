@@ -7,7 +7,7 @@ export default async function CourtsPage() {
   if (!venue) return <p className="text-slate-500">Create a venue first.</p>;
 
   const supabase = await createClient();
-  const [{ data: courts }, { data: settings }] = await Promise.all([
+  const [{ data: courts }, { data: settings }, { data: rules }] = await Promise.all([
     supabase
       .from("courts")
       .select("*")
@@ -15,6 +15,11 @@ export default async function CourtsPage() {
       .is("deleted_at", null)
       .order("created_at"),
     supabase.from("platform_settings").select("price_per_court").maybeSingle(),
+    supabase
+      .from("court_pricing_rules")
+      .select("*")
+      .eq("venue_id", venue.id)
+      .order("created_at"),
   ]);
 
   return (
@@ -23,6 +28,7 @@ export default async function CourtsPage() {
       defaultSport={venue.sport}
       courts={courts ?? []}
       pricePerCourt={settings?.price_per_court ?? 100}
+      rules={rules ?? []}
     />
   );
 }

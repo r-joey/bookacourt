@@ -16,6 +16,7 @@ export function SlotGrid({
   selected,
   onToggle,
   isPast,
+  priceByKey,
 }: {
   courts: GridCourt[];
   hours: number[];
@@ -23,6 +24,7 @@ export function SlotGrid({
   selected?: Set<string>;
   onToggle?: (key: string, court: GridCourt, hour: number) => void;
   isPast?: (hour: number) => boolean;
+  priceByKey?: Record<string, number>;
 }) {
   function cellStatus(court: GridCourt, hour: number): CellStatus {
     const key = slotKey(court.id, hour);
@@ -76,7 +78,7 @@ export function SlotGrid({
                   onClick={() => interactive && onToggle!(slotKey(court.id, hour), court, hour)}
                   className={`h-12 rounded-md border border-slate-200 text-xs transition ${styles[status]}`}
                 >
-                  {status === "selected" ? "✓" : status === "available" ? `₱${court.hourly_price}` : ""}
+                  {status === "selected" ? "✓" : status === "available" ? `₱${priceByKey?.[slotKey(court.id, hour)] ?? court.hourly_price}` : ""}
                 </button>
               );
             })}

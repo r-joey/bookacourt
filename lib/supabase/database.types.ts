@@ -251,6 +251,54 @@ export type Database = {
           },
         ]
       }
+      court_pricing_rules: {
+        Row: {
+          court_id: string
+          created_at: string
+          days: number[]
+          end_hour: number
+          id: string
+          price: number
+          start_hour: number
+          venue_id: string
+        }
+        Insert: {
+          court_id: string
+          created_at?: string
+          days: number[]
+          end_hour: number
+          id?: string
+          price: number
+          start_hour: number
+          venue_id: string
+        }
+        Update: {
+          court_id?: string
+          created_at?: string
+          days?: number[]
+          end_hour?: number
+          id?: string
+          price?: number
+          start_hour?: number
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "court_pricing_rules_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "court_pricing_rules_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -653,6 +701,18 @@ export type Database = {
           hold_expires_at: string | null
         }[]
       }
+      court_effective_price: {
+        Args: { p_court_id: string; p_hour: number; p_weekday: number }
+        Returns: number
+      }
+      get_day_prices: {
+        Args: { p_date: string; p_venue_id: string }
+        Returns: {
+          court_id: string
+          hour: number
+          price: number
+        }[]
+      }
       is_platform_admin: { Args: Record<string, never>; Returns: boolean }
       is_venue_member: { Args: { p_venue_id: string }; Returns: boolean }
       submit_invoice_payment: {
@@ -797,6 +857,7 @@ export const Constants = {
 // ---- Domain aliases ----
 export type Venue = Tables<"venues">
 export type Court = Tables<"courts">
+export type CourtPricingRule = Tables<"court_pricing_rules">
 export type Booking = Tables<"bookings">
 export type BookingSlot = Tables<"booking_slots">
 export type PaymentMethod = Tables<"payment_methods">

@@ -49,7 +49,7 @@ export function SlotGrid({
         style={{ gridTemplateColumns: `132px repeat(${courts.length}, minmax(84px, 1fr))` }}
       >
         {/* header */}
-        <div className="sticky left-0 z-10 bg-white pb-1 pr-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400 shadow-[2px_0_5px_rgba(15,23,42,0.06)]">Time</div>
+        <div className="sticky left-0 z-10 bg-white pb-1 pr-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400 shadow-[4px_0_5px_-3px_rgba(15,23,42,0.12)]">Time</div>
         {courts.map((c) => (
           <div key={c.id} className="pb-1 text-center">
             <div className="truncate text-sm font-semibold">{c.name}</div>
@@ -64,7 +64,7 @@ export function SlotGrid({
         {/* rows */}
         {hours.map((hour) => (
           <FragmentRow key={hour}>
-            <div className="sticky left-0 z-10 flex items-center bg-white pr-2 text-xs text-slate-500 whitespace-nowrap shadow-[2px_0_5px_rgba(15,23,42,0.06)]">{hourRange(hour)}</div>
+            <div className="sticky left-0 z-10 flex items-center bg-white pr-2 text-xs text-slate-500 whitespace-nowrap shadow-[4px_0_5px_-3px_rgba(15,23,42,0.12)]">{hourRange(hour)}</div>
             {courts.map((court) => {
               const status = cellStatus(court, hour);
               const interactive = (status === "available" || status === "selected") && onToggle;

@@ -7,7 +7,7 @@ export default async function CourtsPage() {
   if (!venue) return <p className="text-slate-500">Create a venue first.</p>;
 
   const supabase = await createClient();
-  const [{ data: courts }, { data: settings }, { data: rules }] = await Promise.all([
+  const [{ data: courts }, { data: settings }, { data: rules }, { data: hours }] = await Promise.all([
     supabase
       .from("courts")
       .select("*")
@@ -20,7 +20,10 @@ export default async function CourtsPage() {
       .select("*")
       .eq("venue_id", venue.id)
       .order("created_at"),
+    supabase.from("venue_hours").select("weekday, is_closed").eq("venue_id", venue.id),
   ]);
+
+  const closedDays = (hours ?? []).filter((h) => h.is_closed).map((h) => h.weekday);
 
   return (
     <CourtsManager
@@ -29,6 +32,7 @@ export default async function CourtsPage() {
       courts={courts ?? []}
       pricePerCourt={settings?.price_per_court ?? 100}
       rules={rules ?? []}
+      closedDays={closedDays}
     />
   );
 }

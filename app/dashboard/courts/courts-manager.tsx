@@ -14,12 +14,14 @@ export function CourtsManager({
   courts,
   pricePerCourt,
   rules,
+  closedDays,
 }: {
   venueId: string;
   defaultSport: string;
   courts: Court[];
   pricePerCourt: number;
   rules: CourtPricingRule[];
+  closedDays: number[];
 }) {
   const [state, action] = useActionState<ActionState, FormData>(createCourt, undefined);
   const rulesByCourt = new Map<string, CourtPricingRule[]>();
@@ -99,7 +101,7 @@ export function CourtsManager({
           <p className="text-sm text-slate-400">No courts yet.</p>
         )}
         {courts.map((court) => (
-          <CourtRow key={court.id} court={court} venueId={venueId} rules={rulesByCourt.get(court.id) ?? []} />
+          <CourtRow key={court.id} court={court} venueId={venueId} rules={rulesByCourt.get(court.id) ?? []} closedDays={closedDays} />
         ))}
       </div>
     </div>
@@ -115,7 +117,7 @@ function SubmitButtonGuarded({ disabled }: { disabled: boolean }) {
   );
 }
 
-function CourtRow({ court, venueId, rules }: { court: Court; venueId: string; rules: CourtPricingRule[] }) {
+function CourtRow({ court, venueId, rules, closedDays }: { court: Court; venueId: string; rules: CourtPricingRule[]; closedDays: number[] }) {
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -145,7 +147,7 @@ function CourtRow({ court, venueId, rules }: { court: Court; venueId: string; ru
             </button>
           </div>
         </div>
-        <CourtPricing venueId={venueId} courtId={court.id} basePrice={court.hourly_price} rules={rules} />
+        <CourtPricing venueId={venueId} courtId={court.id} basePrice={court.hourly_price} rules={rules} closedDays={closedDays} />
       </div>
     );
   }

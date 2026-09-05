@@ -21,11 +21,13 @@ export function CourtPricing({
   courtId,
   basePrice,
   rules,
+  closedDays,
 }: {
   venueId: string;
   courtId: string;
   basePrice: number;
   rules: CourtPricingRule[];
+  closedDays: number[];
 }) {
   const [state, action] = useActionState<ActionState, FormData>(createPricingRule, undefined);
   const [pending, startTransition] = useTransition();
@@ -62,14 +64,26 @@ export function CourtPricing({
         <input type="hidden" name="venue_id" value={venueId} />
 
         <div className="flex flex-wrap items-center gap-1.5">
-          {DOW.map((d, i) => (
-            <label key={i} className="cursor-pointer">
-              <input type="checkbox" name="days" value={i} className="peer sr-only" />
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-xs font-medium text-slate-600 transition peer-checked:border-[var(--color-brand)] peer-checked:bg-blue-50 peer-checked:text-[var(--color-brand)]">
-                {d}
-              </span>
-            </label>
-          ))}
+          {DOW.map((d, i) => {
+            const dayClosed = closedDays.includes(i);
+            return (
+              <label key={i} className={dayClosed ? "cursor-not-allowed" : "cursor-pointer"} title={dayClosed ? `Closed on ${FULL[i]}` : undefined}>
+                <input type="checkbox" name="days" value={i} className="peer sr-only" disabled={dayClosed} />
+                <span
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-medium transition ${
+                    dayClosed
+                      ? "border-slate-100 bg-slate-50 text-slate-300 line-through"
+                      : "border-slate-200 text-slate-600 peer-checked:border-[var(--color-brand)] peer-checked:bg-blue-50 peer-checked:text-[var(--color-brand)]"
+                  }`}
+                >
+                  {d}
+                </span>
+              </label>
+            );
+          })}
+          {closedDays.length > 0 && (
+            <span className="ml-1 text-xs text-slate-400">Closed days are disabled</span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-end gap-2">

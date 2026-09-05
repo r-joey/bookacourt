@@ -228,9 +228,9 @@ export function BookingFlow({
       {/* STEP 1 — selection */}
       {step === 1 && (
         <>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="mb-4 flex items-center justify-between gap-3">
             {sports.length > 1 ? (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex min-w-0 gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <FilterPill active={sportFilter === null} onClick={() => setSportFilter(null)}>All courts</FilterPill>
                 {sports.map((s) => (
                   <FilterPill key={s} active={sportFilter === s} onClick={() => setSportFilter(s)}>{s}</FilterPill>
@@ -239,7 +239,7 @@ export function BookingFlow({
             ) : (
               <div />
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <button className="btn-ghost btn-sm" onClick={() => setDate(addDaysKey(date, -1))} disabled={date === todayKey()} aria-label="Previous day">←</button>
               <div className="relative">
                 <input
@@ -401,7 +401,7 @@ function FilterPill({ active, onClick, children }: { active: boolean; onClick: (
   return (
     <button
       onClick={onClick}
-      className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+      className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
         active ? "bg-[var(--color-brand)] text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
       }`}
     >

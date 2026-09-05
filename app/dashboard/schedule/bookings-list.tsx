@@ -105,13 +105,13 @@ export function BookingsList({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1.5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
+              className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium ${
                 tab === t.key ? "bg-[var(--color-brand)] text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
               }`}
             >
@@ -120,7 +120,7 @@ export function BookingsList({
           ))}
         </div>
         <input
-          className="input max-w-[240px]"
+          className="input max-w-[240px] shrink-0"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search name, code, contact…"

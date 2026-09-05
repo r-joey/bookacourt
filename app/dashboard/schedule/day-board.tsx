@@ -49,7 +49,7 @@ export function DayBoard({
         style={{ gridTemplateColumns: `132px repeat(${courts.length}, minmax(92px, 1fr))` }}
       >
         {/* header */}
-        <div className="pb-1 pr-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Time</div>
+        <div className="sticky left-0 z-10 bg-white pb-1 pr-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400 shadow-[2px_0_5px_rgba(15,23,42,0.06)]">Time</div>
         {courts.map((c) => (
           <div key={c.id} className="pb-1 text-center">
             <div className="truncate text-sm font-semibold">{c.name}</div>
@@ -64,7 +64,7 @@ export function DayBoard({
         {/* rows */}
         {hours.map((hour) => (
           <div key={hour} className="contents">
-            <div className="flex items-center pr-2 text-xs text-slate-500 whitespace-nowrap">{hourRange(hour)}</div>
+            <div className="sticky left-0 z-10 flex items-center bg-white pr-2 text-xs text-slate-500 whitespace-nowrap shadow-[2px_0_5px_rgba(15,23,42,0.06)]">{hourRange(hour)}</div>
             {courts.map((court) => {
               const cell = cellsByKey[slotKey(court.id, hour)];
               if (cell) {

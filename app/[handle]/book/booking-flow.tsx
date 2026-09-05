@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { SlotGrid, GridLegend, slotKey, type GridCourt } from "@/components/slot-grid";
 import { QrPayment } from "@/components/qr-payment";
+import { compressImage } from "@/lib/image-compress";
 import {
   longDate, shortDate, todayKey, addDaysKey, weekdayOfKey, hoursList, currentHourManila, peso, hourRange,
 } from "@/lib/format";
@@ -169,12 +170,14 @@ export function BookingFlow({
   async function uploadProof(file: File) {
     if (!booking) return;
     setError("");
-    if (file.size > 5 * 1024 * 1024) { setError("File must be under 5 MB."); return; }
+    if (file.size > 30 * 1024 * 1024) { setError("File is too large (max 30 MB)."); return; }
     setBusy(true);
     try {
-      const ext = file.name.split(".").pop() || "png";
+      const image = await compressImage(file);
+      if (image.size > 5 * 1024 * 1024) throw new Error("Image is still over 5 MB after optimizing — try a smaller one.");
+      const ext = image.name.split(".").pop() || "png";
       const path = `${booking.id}/${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("payment-proofs").upload(path, file);
+      const { error: upErr } = await supabase.storage.from("payment-proofs").upload(path, image);
       if (upErr) throw upErr;
       const { data } = supabase.storage.from("payment-proofs").getPublicUrl(path);
       setProofUrl(data.publicUrl);

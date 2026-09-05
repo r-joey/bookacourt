@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { compressImage } from "@/lib/image-compress";
 
 export function ImageUpload({
   bucket,
@@ -27,19 +28,23 @@ export function ImageUpload({
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError("File must be under 5 MB.");
+    if (file.size > 30 * 1024 * 1024) {
+      setError("File is too large (max 30 MB).");
       return;
     }
     setBusy(true);
     setError("");
     try {
+      const image = await compressImage(file);
+      if (image.size > 5 * 1024 * 1024) {
+        throw new Error("Image is still over 5 MB after optimizing — try a smaller one.");
+      }
       const supabase = createClient();
-      const ext = file.name.split(".").pop() || "png";
+      const ext = image.name.split(".").pop() || "png";
       const path = `${prefix}/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from(bucket)
-        .upload(path, file, { cacheControl: "3600", upsert: false });
+        .upload(path, image, { cacheControl: "3600", upsert: false });
       if (upErr) throw upErr;
       const { data } = supabase.storage.from(bucket).getPublicUrl(path);
       setUrl(data.publicUrl);

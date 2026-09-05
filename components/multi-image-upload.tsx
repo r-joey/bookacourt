@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { compressImage } from "@/lib/image-compress";
 
 export function MultiImageUpload({
   bucket,
@@ -36,14 +37,15 @@ export function MultiImageUpload({
     const supabase = createClient();
     const added: string[] = [];
     for (const file of files.slice(0, room)) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError("Each image must be under 5 MB.");
+      if (file.size > 30 * 1024 * 1024) {
+        setError("Each image must be under 30 MB.");
         continue;
       }
       try {
-        const ext = file.name.split(".").pop() || "jpg";
+        const image = await compressImage(file);
+        const ext = image.name.split(".").pop() || "jpg";
         const path = `${prefix}/banner-${crypto.randomUUID()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from(bucket).upload(path, file);
+        const { error: upErr } = await supabase.storage.from(bucket).upload(path, image);
         if (upErr) throw upErr;
         added.push(supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl);
       } catch (err) {

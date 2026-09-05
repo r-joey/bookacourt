@@ -211,13 +211,13 @@ export function BookingFlow({
   return (
     <div>
       {/* Steps */}
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-6 flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {STEPS.map((label, i) => {
           const n = i + 1;
           const active = n === step;
           const doneStep = n < step;
           return (
-            <span key={label} className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm ${active ? "border-[var(--color-brand)] bg-blue-50 font-semibold text-[var(--color-brand)]" : doneStep ? "border-slate-200 text-slate-500" : "border-slate-200 text-slate-400"}`}>
+            <span key={label} className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm ${active ? "border-[var(--color-brand)] bg-blue-50 font-semibold text-[var(--color-brand)]" : doneStep ? "border-slate-200 text-slate-500" : "border-slate-200 text-slate-400"}`}>
               <span className={`grid h-4 w-4 place-items-center rounded-full text-[10px] ${active || doneStep ? "bg-[var(--color-brand)] text-white" : "bg-slate-200 text-slate-500"}`}>{n}</span>
               {label}
             </span>
@@ -228,7 +228,7 @@ export function BookingFlow({
       {/* STEP 1 — selection */}
       {step === 1 && (
         <>
-          <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {sports.length > 1 ? (
               <div className="flex min-w-0 gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <FilterPill active={sportFilter === null} onClick={() => setSportFilter(null)}>All courts</FilterPill>
@@ -237,9 +237,9 @@ export function BookingFlow({
                 ))}
               </div>
             ) : (
-              <div />
+              <div className="hidden sm:block" />
             )}
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="order-first flex shrink-0 items-center gap-2 sm:order-none">
               <button className="btn-ghost btn-sm" onClick={() => setDate(addDaysKey(date, -1))} disabled={date === todayKey()} aria-label="Previous day">←</button>
               <div className="relative">
                 <input
@@ -414,7 +414,7 @@ function StickyBar({ left, sub, total, actionLabel, disabled, onAction }: {
   left: string; sub: string; total: number; actionLabel: string; disabled: boolean; onAction: () => void;
 }) {
   return (
-    <div className="sticky bottom-4 mt-4 flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-lg">
+    <div className="sticky bottom-4 z-20 mt-4 flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-lg">
       <div className="min-w-0">
         <p className="font-semibold">{left}</p>
         <p className="truncate text-xs text-slate-400">{sub}</p>

@@ -21,7 +21,7 @@ export function SettingsForm({ settings }: { settings: Tables<"platform_settings
             <div>
               <label className="label">Price per court (₱ / month)</label>
               <input name="price_per_court" type="number" min={0} defaultValue={settings?.price_per_court ?? 100} className="input" />
-              <p className="mt-1.5 text-xs text-slate-400">Charged per court created in each monthly cycle.</p>
+              <p className="mt-1.5 text-xs text-slate-400">Charged per active court, every month.</p>
             </div>
             <div>
               <label className="label">Invoice grace period (days)</label>

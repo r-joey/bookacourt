@@ -37,9 +37,8 @@ export function CourtsManager({
       {/* Billing notice */}
       <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         <strong>Heads up on billing.</strong> You’re charged{" "}
-        <strong>{peso(pricePerCourt)} per court you create</strong>, counted once per creation in each
-        monthly billing period — even if you delete the court later. This month so far you’ll be billed
-        for every court added since your cycle started.
+        <strong>{peso(pricePerCourt)} per active court, every month</strong>. Adding a court raises your
+        monthly bill; deleting one lowers it from your next cycle.
       </div>
 
       {showAdd && (
@@ -72,7 +71,7 @@ export function CourtsManager({
 
           <label className="flex items-start gap-2 text-sm text-slate-600">
             <input type="checkbox" className="mt-0.5" checked={acknowledged} onChange={(e) => setAcknowledged(e.target.checked)} />
-            I understand this court will add {peso(pricePerCourt)} to this month’s invoice.
+            I understand this court adds {peso(pricePerCourt)} to my bill every month while it’s active.
           </label>
 
           {state?.error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>}
@@ -127,7 +126,7 @@ function CourtRow({ court }: { court: Court }) {
             className="btn-ghost btn-sm text-red-600"
             disabled={pending}
             onClick={() => {
-              if (confirm(`Remove ${court.name}? This won't refund this month's court charge.`)) {
+              if (confirm(`Remove ${court.name}? It stops adding to your monthly bill from your next cycle.`)) {
                 startTransition(() => deleteCourt(court.id));
               }
             }}

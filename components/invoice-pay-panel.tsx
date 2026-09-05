@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { peso } from "@/lib/format";
+import { QrPayment } from "@/components/qr-payment";
 
 type Payment = {
   payment_qr_url: string | null;
@@ -78,8 +79,7 @@ export function InvoicePayPanel({ invoice, payment }: { invoice: Invoice; paymen
         <>
           <p className="text-sm font-semibold">Pay {peso(invoice.amount)} to settle this invoice</p>
           <div className="mt-3 flex flex-col gap-4 sm:flex-row">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={payment.payment_qr_url} alt="Payment QR" className="h-40 w-40 shrink-0 rounded-lg border border-slate-200 bg-white object-contain p-1" />
+            <QrPayment url={payment.payment_qr_url} label={payment.payment_label ?? "Invoice"} />
             <div className="text-sm text-slate-600">
               <p>Scan with your banking app and send exactly <strong>{peso(invoice.amount)}</strong>.</p>
               {payment.payment_label && <p className="mt-2 font-medium">{payment.payment_label}</p>}

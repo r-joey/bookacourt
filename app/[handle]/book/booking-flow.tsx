@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { SlotGrid, GridLegend, slotKey, type GridCourt } from "@/components/slot-grid";
+import { QrPayment } from "@/components/qr-payment";
 import {
   longDate, shortDate, todayKey, addDaysKey, weekdayOfKey, hoursList, currentHourManila, peso, hourRange,
 } from "@/lib/format";
@@ -269,7 +270,7 @@ export function BookingFlow({
             <div className="card p-10 text-center text-sm text-slate-400">Closed on this day.</div>
           ) : (
             <div className="card space-y-4 p-4">
-              <SlotGrid courts={visibleCourts} hours={hourRows} statusByKey={statusByKey} selected={new Set(selected.keys())} onToggle={toggle} isPast={(h) => (isToday ? h < nowHour : false)} />
+              <SlotGrid courts={visibleCourts} hours={hourRows} statusByKey={statusByKey} selected={new Set(selected.keys())} onToggle={toggle} isPast={(h) => (isToday ? h <= nowHour : false)} />
               <GridLegend />
             </div>
           )}
@@ -336,8 +337,7 @@ export function BookingFlow({
             {chosenMethod && (
               <div className="mt-4 flex flex-col items-start gap-4 sm:flex-row">
                 {chosenMethod.qr_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={chosenMethod.qr_url} alt={chosenMethod.label} className="h-44 w-44 rounded-lg border border-slate-200 object-contain p-1" />
+                  <QrPayment url={chosenMethod.qr_url} label={chosenMethod.label} />
                 )}
                 <div className="text-sm text-slate-600">
                   <p>Scan with your banking app and send exactly <strong>{peso(booking.subtotal)}</strong>. Take a screenshot of the receipt, then upload it below.</p>

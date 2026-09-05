@@ -35,14 +35,16 @@ export default async function BillingPage() {
   const nextDate = profile.next_invoice_date;
   const cycleStart = nextDate ? monthBefore(nextDate) : profile.billing_start_date;
 
+  // Recurring model: you're billed each cycle for your currently-active courts.
+  const { data: myVenues } = await supabase.from("venues").select("id").eq("owner_id", user!.id);
+  const venueIds = (myVenues ?? []).map((v) => v.id);
   let currentCount = 0;
-  if (cycleStart && nextDate) {
+  if (venueIds.length) {
     const { count } = await supabase
-      .from("court_creation_events")
+      .from("courts")
       .select("id", { count: "exact", head: true })
-      .eq("tenant_id", user!.id)
-      .gte("created_at", `${cycleStart}T00:00:00+08:00`)
-      .lt("created_at", `${nextDate}T00:00:00+08:00`);
+      .in("venue_id", venueIds)
+      .is("deleted_at", null);
     currentCount = count ?? 0;
   }
   const estimate = currentCount * price;
@@ -52,7 +54,7 @@ export default async function BillingPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
         <p className="mt-1 text-sm text-slate-500">
-          You’re charged {peso(price)} per court created in each monthly cycle.
+          You’re charged {peso(price)} per active court, every month.
         </p>
       </div>
 
@@ -64,7 +66,7 @@ export default async function BillingPage() {
           </p>
         </div>
         <div className="card p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Courts created this cycle</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Active courts</p>
           <p className="mt-2 text-3xl font-bold">{currentCount}</p>
         </div>
         <div className="card p-5">
